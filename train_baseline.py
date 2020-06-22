@@ -5,31 +5,65 @@ import cv2
 import numpy as np
 from baseline_model import Baseline
 
-def getFrame(clip, sec):
+def getFrame(clip, sec, image_height, image_width):
     clip.set(cv2.CAP_PROP_POS_MSEC, sec*1000)
     hasFrames, image = clip.read()
     # Convert image from 3 channels to 1 channels
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Reduce image size
+    dim = (image_width, image_height)
+    image = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
     return hasFrames, image
 
 # Set seed for reproducibility
 seed = 1
 torch.manual_seed(seed)
 
+# Set device
+def get_default_device():
+    if torch.cuda.is_available():
+        return torch.device('cuda')
+    else:
+        return torch.device('cpu')
+
+device = get_default_device()
+
 input_file_prefix = "../../Data/Clipped/backhand/backspin/clip"
 
 clips_list = []
 
-num_clips = 300
+# TODO - data structure to be changed to jumble and sort into folders the input data
+
+start_clip = 0
+end_clip = 50
+num_clips = (end_clip - start_clip) * 2
 
 # Get all clips into a list
-for num in range(num_clips):
+for num in range(start_clip, end_clip):
     file_name = input_file_prefix+str(num)+".mov"
     clips_list.append(cv2.VideoCapture(file_name))
 
+start_clip = 300
+end_clip = 350
+
+for num in range(start_clip, end_clip):
+    file_name = input_file_prefix+str(num)+".mov"
+    clips_list.append(cv2.VideoCapture(file_name))
+
+
 input_file_prefix = "../../Data/Clipped/backhand/topspin/clip"
 
-for num in range(num_clips):
+start_clip = 0
+end_clip = 50
+
+for num in range(start_clip, end_clip):
+    file_name = input_file_prefix+str(num)+".mov"
+    clips_list.append(cv2.VideoCapture(file_name))
+
+start_clip = 300
+end_clip = 350
+
+for num in range(start_clip, end_clip):
     file_name = input_file_prefix+str(num)+".mov"
     clips_list.append(cv2.VideoCapture(file_name))
 
@@ -40,14 +74,15 @@ y_true = np.array([0]*num_clips + [1]*num_clips)
 
 frameRate = 0.1
 num_frames = int(1.0/frameRate)
-image_height = 1080
-image_width = 1920
+image_height = 540
+image_width = 960
 # Input tensor to model
 X = np.zeros((num_clips*2 , num_frames, image_height, image_width))
 
 for clip_num, clip in enumerate(clips_list):
+    print(clip_num)
     for sec_num, sec in enumerate(np.arange(0.0, 1.0, frameRate)):
-        isSuccess, image = getFrame(clip, sec)
+        isSuccess, image = getFrame(clip, sec, image_height, image_width)
         if not isSuccess:
             print("Something went wrong :(")
             exit()
@@ -62,8 +97,8 @@ y_true = y_true.float()
 
 # Mini-batch size
 bs = 10
-epochs = 2
-lr = 1e-3
+epochs = 4
+lr = 1e-1
 
 # Store all training dataset in a single wrapped tensor
 train_ds = TensorDataset(X, y_true)
@@ -80,28 +115,32 @@ optimizer = torch.optim.SGD(my_model.parameters(), lr=lr)
 
 # Pass through Model
 
+
 for epoch in range(epochs):
     my_model.train()
+    total_loss = 0
+    counter = 0
     for xb, yb in train_dl:
 
         # Forward pass
-        y_pred = my_model.forward(X)
+        y_pred = my_model.forward(xb)
         # Compute CrossEntropyLoss
-        loss = criterion(y_pred, y_true)
+        loss = criterion(y_pred, yb)
 
         # Zero gradients, backward pass, update weights
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-        print("Got here")
+        total_loss += loss.item()
+
+        counter+=1
+        print(counter)
 
     # Report results at end of epoch
-    my_model.eval()
-    y_pred = my_model.forward(X)
-    loss = criterion(y_pred, y_true)
+    avg_loss = total_loss/counter
 
-    print("Epoch: ", epoch, "Loss: ", loss.item())
+    print("Epoch: ", epoch, "Loss: ", avg_loss)
 
 
 # Save the model to a file
