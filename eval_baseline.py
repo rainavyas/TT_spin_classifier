@@ -1,9 +1,9 @@
 import torch
+import cv2
+from baseline_model import Baseline
 from torch.utils.data import TensorDataset
 from torch.utils.data import DataLoader
-import cv2
 import numpy as np
-from baseline_model import Baseline
 
 def getFrame(clip, sec, image_height, image_width):
     clip.set(cv2.CAP_PROP_POS_MSEC, sec*1000)
@@ -15,18 +15,10 @@ def getFrame(clip, sec, image_height, image_width):
     image = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
     return hasFrames, image
 
-# Set seed for reproducibility
-seed = 1
-torch.manual_seed(seed)
-
-# Set device
-def get_default_device():
-    if torch.cuda.is_available():
-        return torch.device('cuda')
-    else:
-        return torch.device('cpu')
-
-device = get_default_device()
+# Load up the trained model
+model_path = 'baseline_trained_seed1.pt'
+model = torch.load(model_path)
+model.eval()
 
 input_file_prefix = "../../Data/Clipped/backhand/backspin/clip"
 
@@ -34,8 +26,8 @@ clips_list = []
 
 # TODO - data structure to be changed to jumble and sort into folders the input data
 
-start_clip = 0
-end_clip = 50
+start_clip = 50
+end_clip = 100
 num_clips = (end_clip - start_clip) * 2
 
 # Get all clips into a list
@@ -43,8 +35,8 @@ for num in range(start_clip, end_clip):
     file_name = input_file_prefix+str(num)+".mov"
     clips_list.append(cv2.VideoCapture(file_name))
 
-start_clip = 300
-end_clip = 350
+start_clip = 250
+end_clip = 300
 
 for num in range(start_clip, end_clip):
     file_name = input_file_prefix+str(num)+".mov"
@@ -53,15 +45,15 @@ for num in range(start_clip, end_clip):
 
 input_file_prefix = "../../Data/Clipped/backhand/topspin/clip"
 
-start_clip = 0
-end_clip = 50
+start_clip = 50
+end_clip = 100
 
 for num in range(start_clip, end_clip):
     file_name = input_file_prefix+str(num)+".mov"
     clips_list.append(cv2.VideoCapture(file_name))
 
-start_clip = 300
-end_clip = 350
+start_clip = 250
+end_clip = 300
 
 for num in range(start_clip, end_clip):
     file_name = input_file_prefix+str(num)+".mov"
@@ -94,54 +86,44 @@ X = X.float()
 y_true = torch.from_numpy(y_true)
 y_true = y_true.float()
 
-# Mini-batch size
-bs = 10
-epochs = 8
-lr = 1e-1
-
-# Store all training dataset in a single wrapped tensor
+bs = 5
 train_ds = TensorDataset(X, y_true)
-
-# Use DataLoader to handle minibatches easily
 train_dl = DataLoader(train_ds, batch_size = bs, shuffle = True)
 
-# Construct model
-my_model = Baseline(image_height, image_width)
-my_model = my_model.float()
 
-criterion = torch.nn.BCELoss()
-optimizer = torch.optim.SGD(my_model.parameters(), lr=lr)
-
-# Pass through Model
+trueTop_predTop = 0
+trueTop_predBack = 0
+trueBack_predBack = 0
+trueBack_predTop = 0
 
 
-for epoch in range(epochs):
-    my_model.train()
-    total_loss = 0
-    counter = 0
-    for xb, yb in train_dl:
+# Assume threshold is 0.5 for now
 
-        # Forward pass
-        y_pred = my_model.forward(xb)
-        # Compute CrossEntropyLoss
-        loss = criterion(y_pred, yb)
+for xb, yb in train_dl:
 
-        # Zero gradients, backward pass, update weights
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+    # Forward pass
+    y_pred = model.forward(xb)
 
-        total_loss += loss.item()
+    y_pred_list = y_pred.tolist()
+    y_true_list = yb.tolist()
 
-        counter+=1
-        print(counter)
+    for yp, yt in zip(y_pred_list, y_true_list):
+        if yp > 0.5:
+            pred = 'top'
 
-    # Report results at end of epoch
-    avg_loss = total_loss/counter
+        else:
+            pred = 'back'
 
-    print("Epoch: ", epoch, "Loss: ", avg_loss)
+        if pred == 'top' and yt == 1:
+            trueTop_predTop += 1
+        elif pred == 'top' and yt == 0:
+            trueBack_predTop += 1
+        elif pred == 'back' and yt == 1:
+            trueBack_predTop += 1
+        elif pred == 'back' and yt == 0:
+            trueBack_predBack += 1
 
-
-# Save the model to a file
-file_path = 'baseline_trained_seed'+str(seed)+'.pt'
-torch.save(my_model, file_path)
+print("True Positive: ", trueTop_predTop)
+print("False Negative: ", trueTop_predBack)
+print("True Negative: ", trueBack_predBack)
+print("False Positive: ", trueBack_predTop)
