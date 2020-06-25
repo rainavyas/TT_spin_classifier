@@ -16,15 +16,6 @@ The data should be structured as follows:
 
     .
     ├── ...
-    ├── eval_unseen                                      
-    │   ├── labels-probs.txt
-    │   ├── labels.txt
-    │   ├── predictions.txt
-    │   └── results.txt
-    └── ...
-
-    .
-    ├── ...
     |── BH_top_back_home
     |   |── Training
     |       |── Back
