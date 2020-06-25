@@ -13,19 +13,29 @@ pip install numpy
 
 Data is freely available at [TT-Data](https://drive.google.com/drive/folders/1HgzGyeLHUzxEZ7LHl0AkdUpJIBU1na0q?usp=sharing). Please acknowledge data source. <br />
 The data should be structured as follows:
-.
-|── ...
-|── BH_top_back_home
-|   |── Training
-|       |── Back
-|       └── Top
-|   |── Eval
-|       |── Back
-|       └── Top
-|   └── Extra
-|       |── Back
-|       └── Top
-└── ...
+
+    .
+    ├── ...
+    ├── eval_unseen                                      
+    │   ├── labels-probs.txt
+    │   ├── labels.txt
+    │   ├── predictions.txt
+    │   └── results.txt
+    └── ...
+
+    .
+    ├── ...
+    |── BH_top_back_home
+    |   |── Training
+    |       |── Back
+    |       └── Top
+    |   |── Eval
+    |       |── Back
+    |       └── Top
+    |   └── Extra
+    |       |── Back
+    |       └── Top
+    └── ...
 
 ## Models
 (To fill)
