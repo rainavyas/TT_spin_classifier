@@ -16,44 +16,27 @@ def getFrame(clip, sec, image_height, image_width):
     return hasFrames, image
 
 # Load up the trained model
-model_path = 'baseline_trained_seed1.pt'
+model_path = 'youtube_baseline_trained_seed1.pt'
 model = torch.load(model_path)
 model.eval()
 
-input_file_prefix = "../../Data/Clipped/backhand/backspin/clip"
+input_file_prefix = "../../Data/Clipped/Youtube/Backhand/Evaluation/Back/clip"
 
 clips_list = []
 
-# TODO - data structure to be changed to jumble and sort into folders the input data
 
-start_clip = 50
-end_clip = 100
-num_clips = (end_clip - start_clip) * 2
+start_clip = 0
+end_clip = 50
+num_clips = end_clip - start_clip
 
+# Backspins
 # Get all clips into a list
 for num in range(start_clip, end_clip):
     file_name = input_file_prefix+str(num)+".mov"
     clips_list.append(cv2.VideoCapture(file_name))
 
-start_clip = 250
-end_clip = 300
-
-for num in range(start_clip, end_clip):
-    file_name = input_file_prefix+str(num)+".mov"
-    clips_list.append(cv2.VideoCapture(file_name))
-
-
-input_file_prefix = "../../Data/Clipped/backhand/topspin/clip"
-
-start_clip = 50
-end_clip = 100
-
-for num in range(start_clip, end_clip):
-    file_name = input_file_prefix+str(num)+".mov"
-    clips_list.append(cv2.VideoCapture(file_name))
-
-start_clip = 250
-end_clip = 300
+# Repeat for top spins
+input_file_prefix = "../../Data/Clipped/Youtube/Backhand/Evaluation/Top/clip"
 
 for num in range(start_clip, end_clip):
     file_name = input_file_prefix+str(num)+".mov"
@@ -97,7 +80,8 @@ trueBack_predBack = 0
 trueBack_predTop = 0
 
 
-# Assume threshold is 0.5 for now
+# Set threshold
+thresh = 0.05
 
 for xb, yb in train_dl:
 
@@ -108,7 +92,8 @@ for xb, yb in train_dl:
     y_true_list = yb.tolist()
 
     for yp, yt in zip(y_pred_list, y_true_list):
-        if yp > 0.5:
+        #print(yp)
+        if yp > thresh:
             pred = 'top'
 
         else:
