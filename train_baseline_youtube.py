@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader
 import cv2
 import numpy as np
 from baseline_model import Baseline
+from baseline_3headattn_model import Baseline_3headattn
 
 def getFrame(clip, sec, image_height, image_width):
     clip.set(cv2.CAP_PROP_POS_MSEC, sec*1000)
@@ -56,7 +57,7 @@ y_true = np.array([0]*num_clips + [1]*num_clips)
 
 # Convert each clip into a series of images
 
-frameRate = 0.05
+frameRate = 0.1
 num_frames = int(1.0/frameRate)
 image_height = 540
 image_width = 960
@@ -90,7 +91,8 @@ train_ds = TensorDataset(X, y_true)
 train_dl = DataLoader(train_ds, batch_size = bs, shuffle = True)
 
 # Construct model
-my_model = Baseline(image_height, image_width)
+#my_model = Baseline(image_height, image_width)
+my_model = Baseline_3headattn(image_height, image_width)
 my_model = my_model.float()
 
 criterion = torch.nn.BCELoss()

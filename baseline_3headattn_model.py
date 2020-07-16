@@ -41,16 +41,16 @@ class Baseline_3headattn(torch.nn.Module):
     def forward(self, X):
 
         # Multihead Attention over frames
-        attn1 = self.attn(torch.eye(self.image_width))
-        attn2 = self.attn(torch.eye(self.image_width))
-        attn3 = self.attn(torch.eye(self.image_width))
+        attn1 = self.attn1(torch.eye(self.image_width))
+        attn2 = self.attn2(torch.eye(self.image_width))
+        attn3 = self.attn3(torch.eye(self.image_width))
 
-        X_attn1 = apply_attn(X, attn1)
-        X_attn2 = apply_attn(X, attn2)
-        X_attn3 = apply_attn(X, attn3)
+        X_attn1 = self.apply_attn(X, attn1)
+        X_attn2 = self.apply_attn(X, attn2)
+        X_attn3 = self.apply_attn(X, attn3)
 
         # Combine into single tensor
-        X_attn_3head = torch.stack(X_attn1, X_attn2, X_attn3, dim = 1)
+        X_attn_3head = torch.stack([X_attn1, X_attn2, X_attn3], dim = 1)
 
         # Pass through resnet-18
         y_1000 = self.resnet18(X_attn_3head)

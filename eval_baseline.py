@@ -20,7 +20,7 @@ model_path = 'baseline_trained_seed1.pt'
 model = torch.load(model_path)
 model.eval()
 
-input_file_prefix = "../../Data/Clipped/backhand/backspin/clip"
+input_file_prefix = "../../Data/Clipped/Home/backhand/backspin/clip"
 
 clips_list = []
 
@@ -43,7 +43,7 @@ for num in range(start_clip, end_clip):
     clips_list.append(cv2.VideoCapture(file_name))
 
 
-input_file_prefix = "../../Data/Clipped/backhand/topspin/clip"
+input_file_prefix = "../../Data/Clipped/Home/backhand/topspin/clip"
 
 start_clip = 50
 end_clip = 100
