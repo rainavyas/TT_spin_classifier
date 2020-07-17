@@ -5,9 +5,10 @@ Motivation: Offer a TT tool that gives player specific statistics on types of sh
 ## Dependencies
 
 ### To install
-pip install torch
-pip install opencv-python
-pip install numpy
+pip install torch <br />
+(The above doesn't work on Windows - generate the necessary command using the official website here - [Torch](https://pytorch.org/get-started/locally/).) <br />
+pip install opencv-python <br />
+pip install numpy <br />
 
 ## Data
 

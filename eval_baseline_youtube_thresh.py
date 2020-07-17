@@ -14,10 +14,16 @@ def getFrame(clip, sec, image_height, image_width):
     # Reduce image size
     dim = (image_width, image_height)
     image = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
+
+    # Normalise frame such that it has zero mean and unit variance
+    image = image.astype(np.float32) / 255
+    image -= image.mean()
+    image /= image.std()
+
     return hasFrames, image
 
 # Load up the trained model
-model_path = 'youtube_baseline_trained_seed1.pt'
+model_path = 'youtube_normalised_trained_seed1.pt'
 model = torch.load(model_path)
 model.eval()
 
@@ -26,7 +32,7 @@ input_file_prefix = "../../Data/Clipped/Youtube/Backhand/Evaluation/Back/clip"
 clips_list = []
 
 
-start_clip = 0
+start_clip = 30
 end_clip = 50
 num_clips = end_clip - start_clip
 

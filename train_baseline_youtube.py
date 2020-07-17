@@ -14,6 +14,12 @@ def getFrame(clip, sec, image_height, image_width):
     # Reduce image size
     dim = (image_width, image_height)
     image = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
+
+    # Normalise frame such that it has zero mean and unit variance
+    image = image.astype(np.float32) / 255
+    image -= image.mean()
+    image /= image.std()
+
     return hasFrames, image
 
 # Set seed for reproducibility
@@ -129,5 +135,5 @@ for epoch in range(epochs):
 
 
 # Save the model to a file
-file_path = 'youtube_baseline_trained_seed'+str(seed)+'.pt'
+file_path = 'youtube_normalised_trained_seed'+str(seed)+'.pt'
 torch.save(my_model, file_path)
