@@ -16,15 +16,10 @@ def getFrame(clip, sec, image_height, image_width):
     dim = (image_width, image_height)
     image = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
 
-    # Normalise frame such that it has zero mean and unit variance
-    image = image.astype(np.float32) / 255
-    image -= image.mean()
-    image /= image.std()
-
     return hasFrames, image
 
 # Load up the trained model
-model_path = 'youtube_normalised_trained_seed1.pt'
+model_path = 'youtube_normalised_trained6epoch_seed1.pt'
 model = torch.load(model_path)
 model.eval()
 
@@ -33,7 +28,7 @@ input_file_prefix = "../../Data/Clipped/Youtube/Backhand/Evaluation/Back/clip"
 clips_list = []
 
 
-start_clip = 30
+start_clip = 0
 end_clip = 50
 num_clips = end_clip - start_clip
 
@@ -60,7 +55,8 @@ num_frames = int(1.0/frameRate)
 image_height = 540
 image_width = 960
 # Input tensor to model
-X = np.zeros((num_clips*2 , num_frames, image_height, image_width))
+X = np.zeros((num_clips*2 , num_frames-1, image_height, image_width))
+prev_img = np.zeros((image_height, image_width))
 
 for clip_num, clip in enumerate(clips_list):
     for sec_num, sec in enumerate(np.arange(0.0, 1.0, frameRate)):
@@ -68,8 +64,19 @@ for clip_num, clip in enumerate(clips_list):
         if not isSuccess:
             print("Something went wrong :(")
             exit()
+        # Get the iterative frame differences
+        if sec_num == 0:
+            prev_img = image
+        image_diff = image - prev_img
+        prev_img = image
 
-        X[clip_num, sec_num] = image
+        # Normalise frame such that it has zero mean and unit variance
+        image_diff = image_diff.astype(np.float32) / 255
+        image_diff -= image_diff.mean()
+        # Don't include the all zeros first frame (no useful information)
+        if sec_num != 0:
+            image_diff /= image_diff.std()
+            X[clip_num, sec_num-1] = image_diff
 
 X = torch.from_numpy(X)
 X = X.float()
@@ -104,7 +111,7 @@ threshs = []
 # Find best threshold to separate into back and top spin
 best = {'acc': 0, 'TruePositive':0, 'FalseNegative': 0, 'TrueNegative':0, 'FalsePositive':0, 'threshold':0}
 
-for thresh in np.arange(0, 1, 0.02):
+for thresh in np.arange(0, 1, 0.002):
 
     trueTop_predTop = 0
     trueTop_predBack = 0
